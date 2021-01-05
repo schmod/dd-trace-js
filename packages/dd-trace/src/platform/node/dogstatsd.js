@@ -1,6 +1,7 @@
 'use strict'
 
 const dgram = require('dgram')
+const isIP = require('net').isIP
 const lookup = require('dns').lookup // cache to avoid instrumentation
 const log = require('../../log')
 
@@ -19,6 +20,7 @@ class Client {
     this._offset = 0
     this._udp4 = this._socket('udp4')
     this._udp6 = this._socket('udp6')
+    this._lookup = options.lookup || this._lookup
   }
 
   gauge (stat, value, tags) {
@@ -36,11 +38,21 @@ class Client {
 
     this._queue = []
 
-    lookup(this._host, (err, address, family) => {
+    this._lookup(this._host, (err, address, family) => {
       if (err) return log.error(err)
 
       queue.forEach(buffer => this._send(address, family, buffer))
     })
+  }
+
+  _lookup (host, cb) {
+    const family = isIP(host)
+    if (family > 0) {
+      cb(null, host, family)
+      return
+    }
+
+    lookup(host, cb)
   }
 
   _send (address, family, buffer) {
@@ -85,7 +97,7 @@ class Client {
   }
 
   _socket (type) {
-    const socket = dgram.createSocket(type)
+    const socket = dgram.createSocket({ type, lookup: this._lookup })
 
     socket.on('error', () => {})
     socket.unref()

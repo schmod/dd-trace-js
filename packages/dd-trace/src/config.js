@@ -228,7 +228,8 @@ class Config extends EventEmitter {
     this.dogstatsd = this.dogstatsd || {}
     this.dogstatsd = {
       hostname: coalesce(dogstatsd.hostname, platform.env(`DD_DOGSTATSD_HOSTNAME`), this.hostname),
-      port: String(coalesce(dogstatsd.port, platform.env('DD_DOGSTATSD_PORT'), 8125))
+      port: String(coalesce(dogstatsd.port, platform.env('DD_DOGSTATSD_PORT'), 8125)),
+      lookup: options.lookup
     }
     this.runtimeMetrics = isTrue(DD_RUNTIME_METRICS_ENABLED)
     this.trackAsyncScope = coalesce(options.trackAsyncScope, this.trackAsyncScope) !== false
